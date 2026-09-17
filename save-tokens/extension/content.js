@@ -37,12 +37,18 @@
 
 const IDLE_MS = 5000;
 const MIN_CHARS = 40; // don't bother distilling short drafts
+// A banner promising "~1% shorter" for a whitespace-only fix erodes trust —
+// looks broken even though it technically worked. Require a savings that's
+// actually worth interrupting for.
+const MIN_SAVINGS_RATIO = 0.03; // at least 3% shorter...
+const MIN_SAVINGS_CHARS = 8; // ...and at least 8 characters, whichever is stricter
 
 let timer = null;
-
-function getComposeElement() {
-  return document.querySelector('textarea, [contenteditable="true"]');
-}
+// What draft (by element + exact original text) the currently-shown banner
+// was computed for. Used to invalidate it the instant the user keeps
+// typing, rather than leaving a stale "Apply" sitting there that would
+// silently discard whatever they typed after the banner appeared.
+let bannerFor = null;
 
 function getText(el) {
   return el.tagName === "TEXTAREA" || el.tagName === "INPUT" ? el.value : el.textContent;
@@ -95,9 +101,15 @@ function setText(el, text) {
   return getText(el) === text;
 }
 
-function showBanner(el, original, distilled) {
+function removeBanner() {
   const existing = document.getElementById("save-tokens-banner");
   if (existing) existing.remove();
+  bannerFor = null;
+}
+
+function showBanner(el, original, distilled) {
+  removeBanner();
+  bannerFor = { el, original };
 
   const banner = document.createElement("div");
   banner.id = "save-tokens-banner";
@@ -123,14 +135,14 @@ function showBanner(el, original, distilled) {
   applyBtn.textContent = "Apply";
   applyBtn.onclick = () => {
     const confirmed = setText(el, distilled);
-    banner.remove();
+    removeBanner();
     if (!confirmed) showFailureNotice();
   };
 
   const dismissBtn = document.createElement("button");
   dismissBtn.id = "st-dismiss";
   dismissBtn.textContent = "Keep original";
-  dismissBtn.onclick = () => banner.remove();
+  dismissBtn.onclick = () => removeBanner();
 
   banner.append(label, applyBtn, dismissBtn);
   document.body.appendChild(banner);
@@ -161,15 +173,35 @@ function onActivity(e) {
   const el = e.target.closest ? e.target.closest('textarea, [contenteditable="true"]') : null;
   if (!el) return;
 
+  // The user kept typing — whatever the banner was offering no longer
+  // matches the current draft. Drop it immediately rather than leaving a
+  // stale "Apply" that would silently discard everything typed since it
+  // appeared. A fresh banner (or none) gets computed after the next idle
+  // period, against the current full text.
+  if (bannerFor && bannerFor.el === el && getText(el) !== bannerFor.original) {
+    removeBanner();
+  }
+
   clearTimeout(timer);
   timer = setTimeout(() => {
     const text = getText(el);
     if (!text || text.length < MIN_CHARS) return;
     const { distill } = window.__saveTokens;
     const distilled = distill(text);
-    if (distilled && distilled !== text && distilled.length < text.length) {
-      showBanner(el, text, distilled);
-    }
+    const savedChars = text.length - distilled.length;
+    const savedRatio = savedChars / text.length;
+    const meaningful = distilled && distilled !== text && savedChars >= MIN_SAVINGS_CHARS && savedRatio >= MIN_SAVINGS_RATIO;
+
+    // Visible only in devtools, never to the page — this is how to confirm
+    // the extension is actually running and what it decided, without
+    // adding UI noise on every idle pause (which happens constantly during
+    // normal typing).
+    console.debug(
+      `[save-tokens] checked draft: ${text.length} -> ${distilled.length} chars ` +
+      `(${Math.round(savedRatio * 100)}% saved) — ${meaningful ? "showing banner" : "below threshold, no banner"}`
+    );
+
+    if (meaningful) showBanner(el, text, distilled);
   }, IDLE_MS);
 }
 

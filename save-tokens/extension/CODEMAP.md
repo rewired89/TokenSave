@@ -10,11 +10,11 @@
 - `function estimateTokens(text)`
 
 ## content.js
-- `function getComposeElement()`
 - `function getText(el)`
 - `function setNativeValue(el, text)`
 - `function setContentEditableValue(el, text)`
 - `function setText(el, text)`
+- `function removeBanner()`
 - `function showBanner(el, original, distilled)`
 - `function showFailureNotice()`
 - `function onActivity(e)`

@@ -1,6 +1,25 @@
 # content.js — verification notes
 
-**Update: confirmed working on live claude.ai (Firefox), by the user, not
+**Update: stale-banner bug found and fixed.** Live testing surfaced a real
+issue this file's original methodology didn't cover (it tested `setText()`
+directly, not the idle-detection/banner lifecycle around it): once a banner
+appeared, it stayed showing unchanged while the user kept typing, so its
+"Apply" would have silently discarded anything typed after it appeared —
+and, separately, the user couldn't tell whether the tool had done anything
+meaningful when savings were near-zero. Fixed: a banner is now invalidated
+the instant the underlying text changes further (confirmed via a Playwright
+harness driving the real `content.js`/`compress.js` files: banner appears →
+more typing → banner disappears within 200ms → a fresh idle period produces
+a new banner reflecting the full current text → Apply confirmed replacing
+the compose box). A minimum-savings threshold (3% and 8 characters) also
+means a banner only appears when there's something worth interrupting for —
+a draft with nothing compressible now correctly shows no banner at all,
+rather than one promising savings that don't materialize. A
+`console.debug` line logs every idle-check's result (draft length before/
+after, % saved, shown or not) for anyone who wants to confirm the extension
+is actually running without adding visible UI noise.
+
+**Confirmed working on live claude.ai (Firefox), by the user, not
 just this harness.** Banner triggered after idle typing, Apply replaced the
 compose box content, and the replaced text was what actually got sent. That
 closes the gap this section originally flagged — this sandbox has no
