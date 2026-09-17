@@ -44,9 +44,15 @@ const MIN_CHARS = 40; // don't bother distilling short drafts
 const MAX_CHARS = 6000;
 // A banner promising "~1% shorter" for a whitespace-only fix erodes trust —
 // looks broken even though it technically worked. Require a savings that's
-// actually worth interrupting for.
+// actually worth interrupting for. The ratio alone already scales with
+// draft size (a short draft needs only a couple of characters saved to
+// clear 3%, a long one needs proportionally more); MIN_SAVINGS_CHARS is
+// just a floor against near-zero noise on short drafts, not a second
+// independent bar — it was set too high at 8 and was blocking real,
+// meaningful compressions on shorter drafts (confirmed live: 112->105
+// chars, a real 6% cut, got hidden for saving "only" 7 characters).
 const MIN_SAVINGS_RATIO = 0.03; // at least 3% shorter...
-const MIN_SAVINGS_CHARS = 8; // ...and at least 8 characters, whichever is stricter
+const MIN_SAVINGS_CHARS = 4; // ...and at least 4 characters
 
 let timer = null;
 // What draft (by element + exact original text) the currently-shown banner
