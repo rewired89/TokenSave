@@ -1,5 +1,24 @@
 # content.js — verification notes
 
+**Update: wrong-element bug found and fixed (claude.ai/code specifically).**
+Live console logs from the user on claude.ai/code showed the extension
+running and checking real content — but against 12,000+ and 8,700+
+character blocks that were clearly never a chat draft. Root cause: the
+selector `textarea, [contenteditable="true"]` combined with a
+document-level `input` listener catches an input event from *any* matching
+element on the page, not just the one the user is typing in — on a complex
+page like claude.ai/code (streaming output panes, code viewers, and
+whatever else also happens to be a textarea/contenteditable), that pulled
+in noise from elements the user never touched, drowning out the real
+compose box. Fixed with `if (el !== document.activeElement) return;` in
+`onActivity` — only the element the user actually has focus in gets
+evaluated at all, plus a 6000-character backstop cap in case some other
+large region ever ends up focused. Verified with a Playwright harness
+simulating exactly this: a focused real compose box with a rambling draft,
+alongside an unfocused 9,000-character pane firing its own `input` event —
+confirmed only the focused element produces a console check/banner, the
+background pane is never evaluated.
+
 **Update: stale-banner bug found and fixed.** Live testing surfaced a real
 issue this file's original methodology didn't cover (it tested `setText()`
 directly, not the idle-detection/banner lifecycle around it): once a banner

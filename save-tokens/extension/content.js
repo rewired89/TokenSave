@@ -37,6 +37,11 @@
 
 const IDLE_MS = 5000;
 const MIN_CHARS = 40; // don't bother distilling short drafts
+// A single compose draft realistically tops out in the low thousands of
+// characters. This is a backstop, not the primary guard (see the
+// document.activeElement check in onActivity below) — it exists in case
+// some other large editable region on the page ever ends up focused.
+const MAX_CHARS = 6000;
 // A banner promising "~1% shorter" for a whitespace-only fix erodes trust —
 // looks broken even though it technically worked. Require a savings that's
 // actually worth interrupting for.
@@ -176,6 +181,16 @@ function onActivity(e) {
   const el = e.target.closest ? e.target.closest('textarea, [contenteditable="true"]') : null;
   if (!el) return;
 
+  // Only evaluate the element the user is actually typing in. Without this,
+  // any input event bubbling from anywhere on the page — a streaming
+  // response pane, a code viewer, any other textarea/contenteditable region
+  // that happens to dispatch 'input' — gets treated as "the draft," which
+  // on a page as complex as claude.ai/code produced exactly this: checks
+  // against 12,000+ character blocks of code/output that were never
+  // something the user was about to send, drowning out the real compose
+  // box in noise.
+  if (el !== document.activeElement) return;
+
   // The user kept typing — whatever the banner was offering no longer
   // matches the current draft. Drop it immediately rather than leaving a
   // stale "Apply" that would silently discard everything typed since it
@@ -188,7 +203,7 @@ function onActivity(e) {
   clearTimeout(timer);
   timer = setTimeout(() => {
     const text = getText(el);
-    if (!text || text.length < MIN_CHARS) return;
+    if (!text || text.length < MIN_CHARS || text.length > MAX_CHARS) return;
     const { distill } = window.__saveTokens;
     const distilled = distill(text);
     const savedChars = text.length - distilled.length;
