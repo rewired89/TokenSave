@@ -125,9 +125,12 @@ function showBanner(el, original, distilled) {
   // though pct is just a number (flagged by Firefox's addons-linter as
   // UNSAFE_VAR_ASSIGNMENT on principle; fixing it outright is simpler and
   // safer than arguing it's fine this one time).
+  // The character counts are shown directly here, not just logged to the
+  // console — that way "is this actually doing anything" is answerable by
+  // looking at the banner itself, no devtools required.
   const label = document.createElement("div");
   label.style.marginBottom = "8px";
-  label.textContent = `Distilled draft ready — ~${pct}% shorter.`;
+  label.textContent = `Draft: ${original.length} → ${distilled.length} chars (~${pct}% shorter)`;
 
   const applyBtn = document.createElement("button");
   applyBtn.id = "st-apply";
