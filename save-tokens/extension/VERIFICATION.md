@@ -9,6 +9,22 @@ session this sandboxed environment cannot reach. The gap between "verified
 against a comparable local page" and "verified against claude.ai itself" is
 real and stated here rather than glossed over.
 
+**Browser tested: Chromium only.** This environment's pre-installed
+Playwright browser is Chromium; there's no Firefox binary available here to
+re-run the same harness against Gecko. The DOM-mutation-vs-framework-model
+risk itself is browser-agnostic (it's about how a *web app's* JS reconciles
+edits, not the browser), so the core finding — a raw `textContent` write can
+visually update a field while a framework's internal model doesn't see it —
+applies the same way in Firefox. The one Chromium-specific detail below
+(`execCommand` not firing `beforeinput`) is a Chromium implementation quirk
+and was *not* re-verified in Gecko; Firefox's `beforeinput` support has
+historically differed from Chromium's in edge cases, so that specific claim
+should be read as "true in Chromium," not "true everywhere." The manifest
+and static code were separately verified as Firefox-valid with Mozilla's own
+`web-ext lint` (0 errors, 0 warnings) — see the main `README.md` — which is
+a different kind of check (manifest schema / static analysis) than the
+runtime DOM-behavior testing this file describes.
+
 ## What was tested
 
 Two local HTML pages, each a contenteditable `<div>` with its own JS "model"

@@ -96,11 +96,42 @@ fabricate a trusted keystroke, so this can't be proven against a framework
 with zero DOM/input-event fallback) is in `extension/VERIFICATION.md`.
 
 `extension/compress.js` is a packaging copy of the canonical `compress.js`
-(Chrome extensions can only load content scripts from inside their own
+(the extension can only load content scripts from inside its own
 directory). Run `npm run sync-extension` after editing `compress.js`;
 `tests/extension-sync.test.js` fails the build if the copy drifts.
 
-### Install (unpacked, for testing)
+The manifest is a single cross-browser `manifest.json` — no separate
+Chrome/Firefox variants. It's plain manifest v3 with no background
+script/service worker (content-script-only), which Firefox supports
+natively, plus a `browser_specific_settings.gecko` block Chrome just
+ignores. Verified with Mozilla's own linter, not assumed compatible:
+
+```powershell
+cd save-tokens/extension
+npx web-ext lint --source-dir . --no-config-discovery
+```
+
+passes with 0 errors, 0 warnings (including the `data_collection_permissions`
+key Firefox now requires — set to `"none"`, matching this project's
+zero-telemetry constraint). This confirms the manifest and static code are
+valid for Firefox; it does not replace the live-claude.ai DOM-behavior gap
+in `extension/VERIFICATION.md`, which is about runtime editor behavior, not
+manifest validity, and applies the same way in both browsers.
+
+### Install — Firefox (unpacked, for testing)
+
+1. Go to `about:debugging#/runtime/this-firefox`.
+2. **Load Temporary Add-on…** → select `save-tokens/extension/manifest.json`.
+3. Open claude.ai, type a draft over 40 characters, wait 5 seconds idle.
+
+This load is temporary — it's removed when Firefox restarts, and needs to
+be re-loaded each session. For a permanent install you'd need to sign it
+through addons.mozilla.org (self-distribution/unlisted signing is free);
+not done here since that publishes it, however unlisted, to a real Mozilla
+account, and that's a call to make deliberately, not a default in a repo
+build.
+
+### Install — Chrome (unpacked, for testing)
 
 1. `chrome://extensions` → enable Developer mode → **Load unpacked** →
    select `save-tokens/extension/`.

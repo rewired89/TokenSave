@@ -107,18 +107,33 @@ function showBanner(el, original, distilled) {
     "max-width:360px;box-shadow:0 4px 12px rgba(0,0,0,.3);";
 
   const pct = Math.round((1 - distilled.length / original.length) * 100);
-  banner.innerHTML =
-    `<div style="margin-bottom:8px;">Distilled draft ready — ~${pct}% shorter.</div>` +
-    `<button id="st-apply" style="margin-right:8px;">Apply</button>` +
-    `<button id="st-dismiss">Keep original</button>`;
 
-  document.body.appendChild(banner);
-  document.getElementById("st-apply").onclick = () => {
+  // Built with createElement/textContent rather than innerHTML — nothing
+  // here needs HTML parsing, and this avoids any injection surface even
+  // though pct is just a number (flagged by Firefox's addons-linter as
+  // UNSAFE_VAR_ASSIGNMENT on principle; fixing it outright is simpler and
+  // safer than arguing it's fine this one time).
+  const label = document.createElement("div");
+  label.style.marginBottom = "8px";
+  label.textContent = `Distilled draft ready — ~${pct}% shorter.`;
+
+  const applyBtn = document.createElement("button");
+  applyBtn.id = "st-apply";
+  applyBtn.style.marginRight = "8px";
+  applyBtn.textContent = "Apply";
+  applyBtn.onclick = () => {
     const confirmed = setText(el, distilled);
     banner.remove();
     if (!confirmed) showFailureNotice();
   };
-  document.getElementById("st-dismiss").onclick = () => banner.remove();
+
+  const dismissBtn = document.createElement("button");
+  dismissBtn.id = "st-dismiss";
+  dismissBtn.textContent = "Keep original";
+  dismissBtn.onclick = () => banner.remove();
+
+  banner.append(label, applyBtn, dismissBtn);
+  document.body.appendChild(banner);
 }
 
 function showFailureNotice() {
@@ -128,11 +143,18 @@ function showFailureNotice() {
     "position:fixed;bottom:80px;right:20px;z-index:99999;background:#5a1a1a;" +
     "color:#fff;padding:12px 16px;border-radius:8px;font:13px system-ui;" +
     "max-width:360px;box-shadow:0 4px 12px rgba(0,0,0,.3);";
-  notice.innerHTML =
-    "<div>Couldn't confirm the compose box updated — please check its contents before sending.</div>" +
-    '<button id="st-failure-dismiss" style="margin-top:8px;">Dismiss</button>';
+
+  const label = document.createElement("div");
+  label.textContent = "Couldn't confirm the compose box updated — please check its contents before sending.";
+
+  const dismissBtn = document.createElement("button");
+  dismissBtn.id = "st-failure-dismiss";
+  dismissBtn.style.marginTop = "8px";
+  dismissBtn.textContent = "Dismiss";
+  dismissBtn.onclick = () => notice.remove();
+
+  notice.append(label, dismissBtn);
   document.body.appendChild(notice);
-  document.getElementById("st-failure-dismiss").onclick = () => notice.remove();
 }
 
 function onActivity(e) {
