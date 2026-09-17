@@ -18,6 +18,45 @@ zero-dependency-at-runtime, and aimed at the same problem, so one repo with
 two top-level directories is less overhead than two repos with duplicated
 CI/README/license boilerplate.
 
+## How this compares to existing tools
+
+This is not a novel idea — said plainly, not buried. Several Chrome
+extensions already do close to what `save-tokens/` does: **Less Tokens**
+and **Nyquest** both do local regex-based filler/stopword stripping with no
+network call, the same core mechanism as `compress.js`. **Token
+Optimizer** takes the other approach flagged earlier in this README (an
+actual LLM call to rewrite the prompt) and ships it. **Brevity Prompt** is
+open source and does regex stripping plus an optional LLM companion. On
+the Claude Code plugin side, aider's repo-map feature is well-known prior
+art for the same underlying idea as `/codemap` (a lightweight signature
+index instead of full-file reads for agent context).
+
+What's actually different here, concretely:
+
+- **Firefox support.** Every similar extension found was Chrome Web
+  Store / Chromium-only. This one's a single cross-browser manifest,
+  verified Firefox-valid with Mozilla's own `web-ext lint` (0 errors, 0
+  warnings) and confirmed working live in Firefox — see the Status table
+  below.
+- **The AutoHotkey piece.** A global hotkey that works in *any* Windows
+  app, not just the browser — none of the tools above cover that surface.
+- **It's code you can actually read**, not a black-box extension with
+  permission to everything typed into an AI chat. Every claim in this
+  README about what it does and doesn't do (no network calls, no
+  telemetry) is checkable in ~400 lines of `compress.js` and `content.js`,
+  not taken on faith from a Chrome Web Store listing.
+- **Paired with the Claude Code plugin.** Didn't find another project
+  combining a local prompt-compressor with a conversation-distillation +
+  codemap plugin for the same "reduce tokens spent on AI coding sessions"
+  goal.
+
+None of that is a claim that this is the *best* option — Nyquest has 281
+compression rules, Less Tokens documents 11 distinct techniques, both are
+more mature. If minimal setup is the goal, installing one of those is a
+completely reasonable choice over building this. This exists because it's
+self-owned, self-verified, and tuned to one user's actual usage patterns —
+not because the underlying idea was original.
+
 ## Status — what's proven, what's verified here, what's still a gap
 
 Nothing below is marked done without having actually been run in this
