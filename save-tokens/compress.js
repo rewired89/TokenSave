@@ -26,10 +26,30 @@ const FILLER_PHRASES = [
   /\bsorry (to bother( you)?( with (this|that|it))?|for asking)\b/gi,
   /\bthanks (so much|in advance)?\b/gi,
   /\bthank you\b/gi,
+
+  // Venting about having to repeat yourself wraps a real instruction in
+  // frustration text that carries no requirement of its own — the
+  // instruction is what follows "tired of telling you to X", not the
+  // venting. These target that wrapper specifically, not general profanity
+  // or emphasis, which stay untouched (that's the user's actual voice, not
+  // filler).
+  /\b(?:(?:because|cause)\s+)?i'?m (?:so |really )?(?:tired|sick) of (?:telling|having to tell) you to\b/gi,
+  /\bi keep (?:having to |needing to )?(?:tell|telling) you to\b/gi,
+  /\bhow many times (?:do i have to|will i have to) (?:say|tell you) this\b/gi,
+  /\bfor the (?:last|hundredth|millionth) time\b/gi,
+  /\bi'?ve told you (?:this )?(?:before|already|a million times)\b/gi,
+  // A trailing complaint clause about the behavior repeating, once the
+  // actual instruction has already been stated, adds nothing new.
+  /,?\s*and you keep (?:fucking |literally )?doing (?:it|this)\b/gi,
+  // Narrow on purpose: "stop THAT/THIS bullshit/shit/nonsense/crap" is a
+  // vague complaint, never a real instruction (a real one names the thing
+  // to stop). A bare "stop X" is left alone since X is usually the
+  // instruction itself.
+  /,?\s*stop (?:that|this|the) (?:bullshit|shit|nonsense|crap)\b/gi,
 ];
 
 // Sentences that are 100% filler and carry no requirement — drop entirely.
-const PURE_FILLER_SENTENCE = /^\s*(hi|hey|hello|thanks|thank you|cheers|hope (you're|this) (doing well|finds you well)|just checking in)[.!]?\s*$/i;
+const PURE_FILLER_SENTENCE = /^\s*(hi|hey|hello|thanks|thank you|cheers|hope (you're|this) (doing well|finds you well)|just checking in|stop (that|this|the) (bullshit|shit|nonsense|crap)|this is ridiculous|i'?m (so |really )?(tired|sick) of this)[.!]?\s*$/i;
 
 // Protect anything that must survive verbatim: code fences, inline code,
 // URLs, file paths, quoted strings, numbers-with-units.
@@ -80,7 +100,7 @@ function splitSentences(text) {
 // Repair the grammatical debris that filler-phrase removal leaves behind:
 // doubled/orphaned commas, dangling leading connectives, stray punctuation,
 // and a lowercase sentence-start where the capitalized word got stripped.
-const CONNECTIVE_WORDS = "and|so|but|well|also|oh|um|uh|now|anyway|anyways";
+const CONNECTIVE_WORDS = "and|so|but|well|also|oh|um|uh|now|anyway|anyways|because|cause|since";
 const LEADING_CONNECTIVES = new RegExp(`^(${CONNECTIVE_WORDS})\\b[,.]?\\s*`, "i");
 // A single connective word stranded between two commas ("Hey, so , help") is
 // what's left when the clause the connective introduced got removed as

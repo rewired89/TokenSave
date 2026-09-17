@@ -141,6 +141,43 @@ describe("contraction vs. quoted-literal edge case", () => {
   });
 });
 
+describe("venting-wrapper extraction (frustration about repeating yourself)", () => {
+  test("extracts the instruction from a 'tired of telling you to' rant, keeps the user's own wording", () => {
+    const out = distill(
+      "Put this into Claude.md cause Im tired of telling you to fucking COMMIT AND PUSH " +
+      "EVERYTHING TO MAIN AND DO NOT CREATE NEW BRANCHES, and you keep fucking doing it, stop that bullshit."
+    );
+    expect(out).toBe("Put this into Claude.md fucking COMMIT AND PUSH EVERYTHING TO MAIN AND DO NOT CREATE NEW BRANCHES.");
+    expect(out).not.toMatch(/tired of/i);
+    expect(out).not.toMatch(/keep.*doing it/i);
+    expect(out).not.toMatch(/stop that bullshit/i);
+  });
+
+  test("strips 'I keep telling you to' and 'how many times' wrappers, keeps both real instructions", () => {
+    const out = distill(
+      "I keep telling you to always run the tests before committing, how many times do I have to say this. " +
+      "For the last time, run npm test first."
+    );
+    expect(out).toBe("Always run the tests before committing. Run npm test first.");
+  });
+
+  test("drops a standalone pure-venting sentence but keeps the real instruction sentence", () => {
+    const out = distill("Stop that bullshit! Use src/api/client.js for the API calls, not the old one.");
+    expect(out).toBe("Use src/api/client.js for the API calls, not the old one.");
+    expect(out).toContain("src/api/client.js");
+  });
+
+  test("does not touch a 'stop X' sentence that names the actual thing to stop", () => {
+    const out = distill("Stop committing directly to the shared branch.");
+    expect(out).toBe("Stop committing directly to the shared branch.");
+  });
+
+  test("leaves ordinary profanity and emphasis untouched — not filler, it's the user's voice", () => {
+    const out = distill("Fix the fucking login bug already, it's broken for everyone.");
+    expect(out).toContain("fucking");
+  });
+});
+
 describe("estimateTokens", () => {
   test("is a rough char/4 estimate", () => {
     expect(estimateTokens("abcd")).toBe(1);

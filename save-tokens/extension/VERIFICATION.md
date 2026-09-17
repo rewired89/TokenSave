@@ -1,5 +1,17 @@
 # content.js — verification notes
 
+**Update: confirmed working on live claude.ai (Firefox), by the user, not
+just this harness.** Banner triggered after idle typing, Apply replaced the
+compose box content, and the replaced text was what actually got sent. That
+closes the gap this section originally flagged — this sandbox has no
+authenticated browser session to test against directly, so the live
+confirmation came from the person actually using it, not from here. The
+rest of this file describes the local-harness methodology that shaped the
+implementation before that confirmation existed; it's kept because it
+explains *why* `content.js` is built the way it is, and because the
+Chromium-vs-Gecko caveat below about `execCommand` is still accurate as a
+statement about what was and wasn't independently tested here.
+
 The original prototype set `el.textContent` directly on the compose element
 and dispatched a synthetic `InputEvent`. That was never run against a real
 contenteditable framework. This directory's `content.js` was rewritten and

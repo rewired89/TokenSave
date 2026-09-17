@@ -9,7 +9,7 @@ filler-stripping + near-duplicate removal), no model call involved.
 
 | Piece | Status |
 |---|---|
-| `compress.js` | Tested. 21 Jest tests, all passing. See "What was fixed" below. |
+| `compress.js` | Tested. 26 Jest tests, all passing. See "What was fixed" and "Venting-wrapper extraction" below. |
 | `cli.js` | Tested (stdin → stdout via `distill()`). |
 | `extension/content.js`, `extension/manifest.json` | Rewritten and verified against a local Playwright harness reproducing a rich contenteditable editor's risk profile. **Not** verified against the live, authenticated claude.ai site — see `extension/VERIFICATION.md` for exactly what was and wasn't checked. |
 | `ahk/save-tokens.ahk` | Statically reviewed and hardened (retry/backoff on the clipboard copy, a settle delay before restoring the clipboard). **Not executed** — this environment has no Windows host to run AutoHotkey on. |
@@ -44,6 +44,34 @@ sentence:
 Two filler patterns were also widened because they left semantically
 dangling fragments, not just punctuation debris: `sorry to bother` didn't
 consume its object ("...you with this"), and it does now.
+
+### Venting-wrapper extraction
+
+This is still regex-based — it recognizes specific wrapper *phrasings*, it
+does not understand meaning. It does not, and cannot, do full semantic
+rewriting into "orders" (that requires a model call, which was explicitly
+ruled out to keep this at zero added cost — see Constraints below). What it
+does do: recognize common wrappers people use when frustrated about
+repeating themselves, and extract the actual instruction from inside them,
+same mechanism as filler-phrase removal, just a different phrase list:
+
+- `"I'm tired of telling you to X"`, `"I keep telling you to X"`, `"how many
+  times do I have to say this"`, `"for the last time"`, `"I've told you
+  before"` → stripped, `X` (the actual instruction) stays.
+- A trailing `", and you keep doing it"` complaint, once the instruction's
+  already stated → stripped.
+- `"stop that/this bullshit/shit/nonsense/crap"` → stripped, but narrowly:
+  only that exact vague-complaint shape. A real instruction like `"stop
+  committing directly to main"` names the actual thing to stop and is left
+  completely alone — this was tested specifically so the tool can't
+  mistake a real imperative for venting.
+- Profanity and emphasis (`"fucking"`, etc.) are **never** stripped — that's
+  the user's actual voice and tone, not filler. Only the meta-complaint
+  about repeating yourself gets removed.
+
+The ceiling here is real: a sentence that vents in a way not covered by one
+of these patterns won't get caught. This targets the common, recognizable
+shapes, not every possible phrasing.
 
 ### Contract (unchanged, still enforced)
 
