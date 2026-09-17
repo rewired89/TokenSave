@@ -1,0 +1,17 @@
+{
+  "name": "save-tokens",
+  "version": "0.1.0",
+  "description": "Compresses a user's own draft message before submission to any AI chat, so tokens charged on send are already the short version. Pure heuristic, no network, no dependencies at runtime.",
+  "main": "compress.js",
+  "bin": {
+    "save-tokens": "./cli.js"
+  },
+  "scripts": {
+    "test": "jest",
+    "sync-extension": "node -e \"require('fs').copyFileSync('compress.js','extension/compress.js')\""
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "license": "MIT"
+}

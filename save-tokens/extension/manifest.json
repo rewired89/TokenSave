@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Save Tokens — live input distiller",
+  "version": "0.1.0",
+  "description": "After 5s of typing inactivity, distills your draft into a shorter prompt that preserves all requirements. Shows a diff before you hit Enter.",
+  "permissions": [],
+  "host_permissions": ["https://claude.ai/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["compress.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

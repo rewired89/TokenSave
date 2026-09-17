@@ -1,0 +1,16 @@
+{
+  "name": "tokensave",
+  "owner": {
+    "name": "rewired89"
+  },
+  "metadata": {
+    "description": "Token-saving tools: a live draft compressor and a Claude Code plugin for conversation distillation and repo codemaps."
+  },
+  "plugins": [
+    {
+      "name": "distill",
+      "source": "./distill-plugin",
+      "description": "Distill a finished conversation into a compact build-spec, and generate per-directory CODEMAP.md files for low-token repo navigation."
+    }
+  ]
+}

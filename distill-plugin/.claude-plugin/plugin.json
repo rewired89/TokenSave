@@ -1,0 +1,12 @@
+{
+  "name": "distill",
+  "version": "0.1.0",
+  "description": "Distill a finished conversation into a compact build-spec, and generate per-directory CODEMAP.md files for low-token repo navigation.",
+  "author": {
+    "name": "rewired89"
+  },
+  "commands": [
+    "./commands/distill.md",
+    "./commands/codemap.md"
+  ]
+}
